@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FocusFlow | Pro Timer</title>
+    <style>
+        :root {
+            --bg: #0f172a; --card-bg: #1e293b; --primary: #6c5ce7; --accent: #00d2d3; --text: #f8fafc;
+        }
+        /* 6 Themes */
+        body.theme-1 { --bg: #064e3b; --card-bg: #065f46; --primary: #10b981; --accent: #fbbf24; }
+        body.theme-2 { --bg: #4c0519; --card-bg: #881337; --primary: #fb7185; --accent: #ffffff; }
+        body.theme-3 { --bg: #171717; --card-bg: #262626; --primary: #f59e0b; --accent: #ef4444; }
+        body.theme-4 { --bg: #1e272e; --card-bg: #485460; --primary: #0fbcf9; --accent: #05c46b; }
+        body.theme-5 { --bg: #2f3542; --card-bg: #57606f; --primary: #ffa502; --accent: #ff7f50; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            transition: all 0.6s ease;
+        }
+
+        /* Responsive Header Navigation */
+        nav {
+            width: 100%;
+            padding: 20px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            margin-bottom: auto;
+        }
+
+        .nav-logo {
+            font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            color: var(--primary); /* This changes with the theme */
+            transition: color 0.6s ease;
+        }
+
+        /* App Layout */
+        .app-wrapper {
+            display: flex;
+            gap: 25px;
+            align-items: center;
+            justify-content: center;
+            flex-grow: 2;
+            padding: 20px;
+        }
+
+        .container {
+            background: var(--card-bg);
+            padding: 2.5rem;
+            border-radius: 30px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.4);
+            width: 350px;
+            text-align: center;
+            transition: background-color 0.5s ease;
+        }
+
+        .timer-display { font-size: 5.5rem; font-weight: 800; margin: 15px 0; font-variant-numeric: tabular-nums; }
+        
+        .progress-container { 
+            width: 100%; height: 10px; background: rgba(255,255,255,0.08); 
+            border-radius: 12px; margin-bottom: 25px; overflow: hidden; 
+        }
+        #progressBar { height: 100%; width: 100%; background: linear-gradient(90deg, var(--primary), var(--accent)); transition: width 1s linear; }
+
+        .controls { display: flex; gap: 12px; margin-bottom: 25px; }
+        button { flex: 1; padding: 14px; border-radius: 12px; border: none; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .start-btn { background: var(--primary); color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .reset-btn { background: rgba(255,255,255,0.1); color: var(--text); }
+
+        .settings {
+            display: flex; justify-content: space-between; align-items: center;
+            padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.95rem;
+        }
+        input { width: 55px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 6px; border-radius: 8px; text-align: center; }
+
+        /* Sidebar Themes */
+        .theme-sidebar {
+            display: flex; flex-direction: column; gap: 12px;
+            background: rgba(0,0,0,0.25); padding: 15px; border-radius: 20px;
+        }
+        .theme-dot {
+            width: 35px; height: 35px; border-radius: 50%; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 10px; border: 2px solid transparent; transition: 0.4s;
+        }
+        .theme-dot.locked { opacity: 0.15; cursor: not-allowed; background: #222 !important; }
+        .theme-dot.active { border-color: white; transform: scale(1.2); }
+
+        /* Footer */
+        footer {
+            margin-top: auto;
+            padding: 25px;
+            font-size: 0.8rem;
+            opacity: 0.5;
+            letter-spacing: 1px;
+        }
+
+        @media (max-width: 650px) {
+            .app-wrapper { flex-direction: column; }
+            .theme-sidebar { flex-direction: row; }
+        }
+    </style>
+</head>
+<body class="theme-0">
+
+<nav>
+    <div class="nav-logo">FocusFlow</div>
+</nav>
+
+<div class="app-wrapper">
+    <div class="container">
+        <h3 id="statusLabel">Study Session</h3>
+        <div class="timer-display" id="timer">25:00</div>
+        
+        <div class="progress-container"><div id="progressBar"></div></div>
+
+        <div class="controls">
+            <button class="start-btn" id="startBtn">Start</button>
+            <button class="reset-btn" id="resetBtn">Reset</button>
+        </div>
+
+        <div class="settings">
+            <div>Mins: <input type="number" id="minutesInput" value="25" min="1" max="120"></div>
+            <div>Sessions: <span id="sessions">0</span></div>
+        </div>
+    </div>
+
+    <div class="theme-sidebar" id="sidebar">
+        <div class="theme-dot" style="background: #6c5ce7;" onclick="selectTheme(0)" data-theme="0"></div>
+        <div class="theme-dot locked" style="background: #10b981;" onclick="selectTheme(1)" data-theme="1">🔒</div>
+        <div class="theme-dot locked" style="background: #fb7185;" onclick="selectTheme(2)" data-theme="2">🔒</div>
+        <div class="theme-dot locked" style="background: #f59e0b;" onclick="selectTheme(3)" data-theme="3">🔒</div>
+        <div class="theme-dot locked" style="background: #0fbcf9;" onclick="selectTheme(4)" data-theme="4">🔒</div>
+        <div class="theme-dot locked" style="background: #ffa502;" onclick="selectTheme(5)" data-theme="5">🔒</div>
+    </div>
+</div>
+
+<footer>
+    &copy; 2024 FocusFlow | Designed for Productivity
+</footer>
+
+<script>
+    let timeLeft, timerId = null, isRunning = false, totalSeconds;
+    let completedSessions = parseInt(localStorage.getItem('sessions')) || 0;
+    let currentTheme = parseInt(localStorage.getItem('activeTheme')) || 0;
+
+    const timerDisplay = document.getElementById('timer');
+    const startBtn = document.getElementById('startBtn');
+    const progressBar = document.getElementById('progressBar');
+    const minutesInput = document.getElementById('minutesInput');
+    const sessionsDisplay = document.getElementById('sessions');
+
+    function initTimer() {
+        if (isRunning) return;
+        const mins = parseInt(minutesInput.value) || 25;
+        timeLeft = mins * 60;
+        totalSeconds = timeLeft;
+        updateDisplay();
+    }
+
+    function updateDisplay() {
+        const mins = Math.floor(timeLeft / 60);
+        const secs = timeLeft % 60;
+        timerDisplay.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        progressBar.style.width = `${(timeLeft / totalSeconds) * 100}%`;
+    }
+
+    function updateMilestones() {
+        sessionsDisplay.textContent = completedSessions;
+        document.querySelectorAll('.theme-dot').forEach((dot, index) => {
+            if (completedSessions >= index) {
+                dot.classList.remove('locked');
+                dot.innerHTML = '';
+            }
+            dot.classList.toggle('active', currentTheme === index);
+        });
+    }
+
+    function selectTheme(index) {
+        if (completedSessions < index) return;
+        currentTheme = index;
+        document.body.className = `theme-${index}`;
+        localStorage.setItem('activeTheme', index);
+        updateMilestones();
+    }
+
+    startBtn.addEventListener('click', function() {
+        if (isRunning) {
+            clearInterval(timerId);
+            this.textContent = 'Resume';
+        } else {
+            this.textContent = 'Pause';
+            timerId = setInterval(() => {
+                timeLeft--;
+                updateDisplay();
+                if (timeLeft <= 0) {
+                    clearInterval(timerId);
+                    completedSessions++;
+                    localStorage.setItem('sessions', completedSessions);
+                    
+                    // AUTO CHANGE THEME
+                    currentTheme = completedSessions % 6; 
+                    selectTheme(currentTheme);
+                    
+                    alert("Focus complete! Theme updated.");
+                    resetTimer();
+                }
+            }, 1000);
+        }
+        isRunning = !isRunning;
+    });
+
+    function resetTimer() {
+        clearInterval(timerId);
+        isRunning = false;
+        startBtn.textContent = 'Start';
+        initTimer();
+    }
+
+    document.getElementById('resetBtn').addEventListener('click', resetTimer);
+    minutesInput.addEventListener('change', initTimer);
+
+    updateMilestones();
+    selectTheme(currentTheme);
+    initTimer();
+</script>
+</body>
+</html>
